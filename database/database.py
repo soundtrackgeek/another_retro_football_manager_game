@@ -236,14 +236,26 @@ class FootballDB:
                     VALUES (?, ?, ?, ?)
                 """, team)
 
+    def get_team_details(self, team_id: int) -> Dict[str, Any]:
+        with self.connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM teams WHERE id = ?", (team_id,))
+            result = cursor.fetchone()
+            return dict(result) if result else None
+    
     def generate_squad_for_team(self, team_id):
         try:
             creator = PlayerCreator()
             conn = self.connect()
             cursor = conn.cursor()
             
-            # Generate squad using the PlayerCreator
-            squad = creator.generate_squad(team_id)
+            # Get team details first
+            team_details = self.get_team_details(team_id)
+            if not team_details:
+                raise Exception(f"Team {team_id} not found")
+            
+            # Generate squad using the PlayerCreator with team reputation
+            squad = creator.generate_squad(team_id, team_details['reputation'])
             
             # Insert all players into database
             for player in squad:
