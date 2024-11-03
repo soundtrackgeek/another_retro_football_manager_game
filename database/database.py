@@ -113,8 +113,8 @@ class FootballDB:
                 # Premier League (division_id: 1)
                 ("Arsenal", 1, 90, 500000000),
                 ("Aston Villa", 1, 85, 300000000),
-                ("AFC Bournemouth", 1, 78, 200000000),
                 ("Brentford", 1, 79, 180000000),
+                ("Bournemouth", 1, 78, 200000000),
                 ("Brighton & Hove Albion", 1, 82, 250000000),
                 ("Chelsea", 1, 88, 450000000),
                 ("Crystal Palace", 1, 78, 200000000),
