@@ -24,7 +24,7 @@ class Game:
         
         # Load C64 font
         font_path = os.path.join('assets', 'fonts', 'C64_Pro-STYLE.ttf')
-        self.font_size = 24
+        self.font_size = 12
         self.font = pygame.font.Font(font_path, self.font_size)
         
         # Initialize menu

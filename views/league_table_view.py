@@ -60,7 +60,7 @@ class LeagueTableView:
                 self.screen.blit(stat_text, (x, y))
                 x += width
             
-            y += 30
+            y += 25
 
         # Draw footer with instructions
         footer = self.font.render("Press ESC to return", True, (255, 255, 255))
