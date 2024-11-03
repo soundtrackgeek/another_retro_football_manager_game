@@ -8,10 +8,18 @@ import csv
 
 class FootballDB:
     def __init__(self):
+        # Create database directory if it doesn't exist
+        os.makedirs('database', exist_ok=True)
+        os.makedirs('logs', exist_ok=True)
+        
         self.db_path = os.path.join('database', 'football.db')
+        print(f"Database path: {os.path.abspath(self.db_path)}")  # Debug print
         self.conn = None
         self.setup_logging()
-        self.initialize_database()
+        
+        # Only initialize if database doesn't exist
+        if not os.path.exists(self.db_path):
+            self.initialize_database()
 
     def setup_logging(self):
         logging.basicConfig(
@@ -22,11 +30,13 @@ class FootballDB:
 
     def connect(self):
         try:
-            self.conn = sqlite3.connect(self.db_path)
-            self.conn.row_factory = sqlite3.Row
+            if self.conn is None:
+                self.conn = sqlite3.connect(self.db_path)
+                self.conn.row_factory = sqlite3.Row
             return self.conn
         except sqlite3.Error as e:
             logging.error(f"Database connection error: {e}")
+            print(f"Database connection error: {e}")  # Debug print
             raise
 
     def initialize_database(self):
@@ -286,13 +296,10 @@ class FootballDB:
         }
 
     def generate_squad_for_team(self, team_id):
-        first_names, last_names = self.load_player_names()
-        
-        with self.connect() as conn:
+        try:
+            first_names, last_names = self.load_player_names()
+            conn = self.connect()
             cursor = conn.cursor()
-            
-            # Clear existing players for this team
-            cursor.execute("DELETE FROM players WHERE team_id = ?", (team_id,))
             
             # Generate 20 players
             for _ in range(20):
@@ -312,15 +319,37 @@ class FootballDB:
                     player['speed'], player['morale'], player['value'],
                     player['wages'], player['contract_years']
                 ))
+            conn.commit()
+        except Exception as e:
+            print(f"Error generating squad for team {team_id}: {e}")
+            if conn:
+                conn.rollback()
 
     def generate_all_teams_squads(self):
-        with self.connect() as conn:
+        print("Starting squad generation...")  # Debug print
+        try:
+            conn = self.connect()
             cursor = conn.cursor()
             cursor.execute("SELECT id FROM teams")
             teams = cursor.fetchall()
             
+            print(f"Found {len(teams)} teams to generate squads for")  # Debug print
+            
+            # Clear all existing players first
+            cursor.execute("DELETE FROM players")
+            conn.commit()
+            
             for team in teams:
+                print(f"Generating squad for team {team[0]}")  # Debug print
                 self.generate_squad_for_team(team[0])
+            
+            conn.commit()
+            print("Squad generation complete")  # Debug print
+        except sqlite3.Error as e:
+            logging.error(f"Error generating squads: {e}")
+            print(f"Error generating squads: {e}")  # Debug print
+            if conn:
+                conn.rollback()
 
     def clear_all_players(self):
         with self.connect() as conn:
@@ -345,14 +374,33 @@ class FootballDB:
             return dict(result) if result else None
 
     def get_team_players(self, team_id: int) -> List[Dict[str, Any]]:
-        with self.connect() as conn:
+        try:
+            conn = self.connect()
             cursor = conn.cursor()
+            
+            # Add debug prints
+            print(f"Querying players for team_id: {team_id}")
+            cursor.execute("SELECT COUNT(*) FROM players")
+            total_players = cursor.fetchone()[0]
+            print(f"Total players in database: {total_players}")
+            
             cursor.execute("""
                 SELECT * FROM players 
                 WHERE team_id = ?
                 ORDER BY position, last_name
             """, (team_id,))
-            return [dict(row) for row in cursor.fetchall()]
+            
+            players = [dict(row) for row in cursor.fetchall()]
+            print(f"Found {len(players)} players for team {team_id}")
+            
+            if len(players) > 0:
+                print(f"Sample player data: {players[0]}")
+            return players
+            
+        except sqlite3.Error as e:
+            logging.error(f"Error getting team players: {e}")
+            print(f"Error getting team players: {e}")
+            return []
 
     def update_league_table(self, team_id: int, division_id: int, 
                           played: int, won: int, drawn: int, lost: int,

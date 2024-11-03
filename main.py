@@ -7,6 +7,7 @@ from views.division_select_view import DivisionSelectView
 from views.team_select_view import TeamSelectView
 from views.game_menu_view import GameMenuView
 from views.team_submenu_view import TeamSubmenuView  # Add this import
+from views.team_view import TeamView  # Add this import
 from database.database import FootballDB  # Fix this import line
 
 class Game:
@@ -27,10 +28,18 @@ class Game:
         self.current_view = self.menu
         
         self.db = FootballDB()
+        self.game_started = False
+        print("Game initialized")  # Debug print
         
     def start_new_game(self):
-        self.db.clear_all_players()
-        self.db.generate_all_teams_squads()
+        print("Starting new game - generating players...")
+        try:
+            self.db.clear_all_players()
+            self.db.generate_all_teams_squads()
+            self.game_started = True
+            print("Player generation complete")
+        except Exception as e:
+            print(f"Error starting new game: {e}")
 
     def run(self):
         running = True
@@ -43,7 +52,7 @@ class Game:
                     
                     if isinstance(self.current_view, MenuView):
                         if result == "START_GAME":
-                            self.start_new_game()  # Generate players for new game
+                            self.start_new_game()  # This will now definitely generate players
                             self.current_view = DivisionSelectView(self.screen, self.font)
                     
                     elif isinstance(self.current_view, DivisionSelectView):
@@ -71,8 +80,15 @@ class Game:
                             # TODO: Create and show player selection view
                             print("Select players for next match")
                         elif result == "VIEW_TEAM":
-                            # TODO: Create and show team detail view
-                            print("View team selected")
+                            self.current_view = TeamView(self.screen, self.font, self.current_view.team_id)
+                    
+                    elif isinstance(self.current_view, TeamView):
+                        if result == "BACK":
+                            self.current_view = TeamSubmenuView(self.screen, self.font, self.current_view.team_id)
+            
+            # Add check for game state - if not started, ensure players are generated
+            if not self.game_started and not isinstance(self.current_view, MenuView):
+                self.start_new_game()
             
             self.screen.fill((0, 0, 128))  # Navy blue background
             self.current_view.draw()
