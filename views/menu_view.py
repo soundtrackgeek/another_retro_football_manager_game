@@ -17,7 +17,8 @@ class MenuView:
         elif key == pygame.K_DOWN:
             self.selected_option = (self.selected_option + 1) % len(self.options)
         elif key == pygame.K_RETURN:
-            self.select_option()
+            return self.select_option()
+        return None
     
     def select_option(self):
         selected = self.options[self.selected_option]

@@ -32,24 +32,26 @@ class Game:
                 elif event.type == pygame.KEYDOWN:
                     result = self.current_view.handle_input(event.key)
                     
-                    if isinstance(self.current_view, MenuView) and result == "START_GAME":
-                        self.current_view = DivisionSelectView(self.screen, self.font)
+                    if isinstance(self.current_view, MenuView):
+                        if result == "START_GAME":
+                            self.current_view = DivisionSelectView(self.screen, self.font)
                     
-                    elif isinstance(self.current_view, DivisionSelectView) and result is not None:
-                        self.current_view = TeamSelectView(self.screen, self.font, result)
+                    elif isinstance(self.current_view, DivisionSelectView):
+                        if result is not None:  # Division ID was returned
+                            self.current_view = TeamSelectView(self.screen, self.font, result)
                     
                     elif isinstance(self.current_view, TeamSelectView):
-                        if result == -1:  # Back to division selection
+                        if result == -1:  # Back button pressed
                             self.current_view = DivisionSelectView(self.screen, self.font)
-                        elif result is not None:  # Team selected
-                            # TODO: Initialize game with selected team
-                            pass
+                        elif result is not None:  # Team was selected
+                            # TODO: Start game with selected team
+                            print(f"Selected team ID: {result}")
+                            self.current_view = self.menu  # Temporarily go back to menu
             
-            # Draw
             self.screen.fill((0, 0, 128))  # Navy blue background
             self.current_view.draw()
             pygame.display.flip()
-            
+        
         pygame.quit()
         sys.exit()
 
