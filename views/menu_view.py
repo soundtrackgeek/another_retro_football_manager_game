@@ -1,6 +1,8 @@
 # views/menu_view.py
 import pygame
 import sys  # Add this import
+from .division_select_view import DivisionSelectView
+from .team_select_view import TeamSelectView
 
 class MenuView:
     def __init__(self, screen, font):
@@ -18,10 +20,13 @@ class MenuView:
             self.select_option()
     
     def select_option(self):
-        if self.options[self.selected_option] == "Quit Game":
+        selected = self.options[self.selected_option]
+        if selected == "Start Game":
+            return "START_GAME"
+        elif selected == "Quit Game":
             pygame.quit()
             sys.exit()
-        # Other options will be implemented later
+        return None
     
     def draw(self):
         # Calculate center position

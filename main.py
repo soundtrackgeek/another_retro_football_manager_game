@@ -3,6 +3,8 @@ import pygame
 import sys
 import os
 from views.menu_view import MenuView
+from views.division_select_view import DivisionSelectView
+from views.team_select_view import TeamSelectView
 
 class Game:
     def __init__(self):
@@ -19,6 +21,7 @@ class Game:
         
         # Initialize menu
         self.menu = MenuView(self.screen, self.font)
+        self.current_view = self.menu
         
     def run(self):
         running = True
@@ -27,11 +30,24 @@ class Game:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
-                    self.menu.handle_input(event.key)
+                    result = self.current_view.handle_input(event.key)
+                    
+                    if isinstance(self.current_view, MenuView) and result == "START_GAME":
+                        self.current_view = DivisionSelectView(self.screen, self.font)
+                    
+                    elif isinstance(self.current_view, DivisionSelectView) and result is not None:
+                        self.current_view = TeamSelectView(self.screen, self.font, result)
+                    
+                    elif isinstance(self.current_view, TeamSelectView):
+                        if result == -1:  # Back to division selection
+                            self.current_view = DivisionSelectView(self.screen, self.font)
+                        elif result is not None:  # Team selected
+                            # TODO: Initialize game with selected team
+                            pass
             
             # Draw
             self.screen.fill((0, 0, 128))  # Navy blue background
-            self.menu.draw()
+            self.current_view.draw()
             pygame.display.flip()
             
         pygame.quit()

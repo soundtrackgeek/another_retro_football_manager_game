@@ -108,18 +108,43 @@ class FootballDB:
                     VALUES (?, ?, ?, ?)
                 """, (name, division_id, reputation, finances))
 
-            # Add sample Premier League teams
-            premier_league_teams = [
+            # Add sample teams for all divisions
+            teams_data = [
+                # Premier League (division_id: 1)
                 ("Arsenal", 1, 90, 500000000),
                 ("Chelsea", 1, 88, 450000000),
                 ("Liverpool", 1, 89, 475000000),
                 ("Manchester City", 1, 92, 600000000),
                 ("Manchester United", 1, 88, 525000000),
-                # Add more teams as needed
+                ("Tottenham", 1, 85, 400000000),
+                ("Newcastle", 1, 84, 350000000),
+                # Add more Premier League teams...
+
+                # Championship (division_id: 2)
+                ("Leeds United", 2, 75, 100000000),
+                ("Leicester City", 2, 76, 120000000),
+                ("Southampton", 2, 74, 90000000),
+                # Add more Championship teams...
+
+                # League One (division_id: 3)
+                ("Portsmouth", 3, 65, 20000000),
+                ("Derby County", 3, 66, 25000000),
+                ("Bolton", 3, 64, 18000000),
+                # Add more League One teams...
+
+                # League Two (division_id: 4)
+                ("Bradford City", 4, 55, 5000000),
+                ("Wrexham", 4, 54, 4000000),
+                ("Stockport", 4, 53, 3000000),
+                # Add more League Two teams...
             ]
 
-            for team in premier_league_teams:
-                add_team(*team)
+            cursor.execute("DELETE FROM teams")  # Clear existing teams
+            for team in teams_data:
+                cursor.execute("""
+                    INSERT INTO teams (name, division_id, reputation, finances)
+                    VALUES (?, ?, ?, ?)
+                """, team)
 
     def get_teams_in_division(self, division_id: int) -> List[Dict[str, Any]]:
         with self.connect() as conn:
