@@ -2,12 +2,21 @@ import pygame
 from database.database import FootballDB
 
 class TeamView:
+    POSITION_PRIORITY = {
+        'GK': 0,
+        'DEF': 1,
+        'MID': 2,
+        'ATT': 3
+    }
+
     def __init__(self, screen, font, team_id):
         self.screen = screen
         self.font = font
         self.team_id = team_id
         self.db = FootballDB()
         self.players = self.db.get_team_players(team_id)
+        # Sort players by position
+        self.players.sort(key=lambda x: self.POSITION_PRIORITY.get(x['position'], 999))
         print(f"Number of players loaded: {len(self.players)}")  # Debug print
         if len(self.players) > 0:
             print(f"First player: {self.players[0]}")  # Debug print
