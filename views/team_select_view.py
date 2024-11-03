@@ -15,15 +15,17 @@ class TeamSelectView:
 
     def handle_input(self, key):
         if key == pygame.K_UP:
-            self.selected_index = (self.selected_index - 1) % len(self.teams)
-            # Adjust scroll if selection goes above visible area
-            if self.selected_index < self.scroll_offset:
-                self.scroll_offset = self.selected_index
+            if self.selected_index > 0:  # Only move up if not at first team
+                self.selected_index -= 1
+                # Adjust scroll if selection goes above visible area
+                if self.selected_index < self.scroll_offset:
+                    self.scroll_offset = self.selected_index
         elif key == pygame.K_DOWN:
-            self.selected_index = (self.selected_index + 1) % len(self.teams)
-            # Adjust scroll if selection goes below visible area
-            if self.selected_index >= self.scroll_offset + self.visible_teams:
-                self.scroll_offset = self.selected_index - self.visible_teams + 1
+            if self.selected_index < len(self.teams) - 1:  # Only move down if not at last team
+                self.selected_index += 1
+                # Adjust scroll if selection goes below visible area
+                if self.selected_index >= self.scroll_offset + self.visible_teams:
+                    self.scroll_offset = self.selected_index - self.visible_teams + 1
         elif key == pygame.K_RETURN:
             return self.teams[self.selected_index]['id']
         elif key == pygame.K_ESCAPE:
