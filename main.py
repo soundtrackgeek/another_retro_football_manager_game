@@ -11,6 +11,8 @@ from views.team_view import TeamView  # Add this import
 from views.player_view import PlayerView
 from database.database import FootballDB  # Fix this import line
 from views.player_selection_view import PlayerSelectionView
+from views.league_table_view import LeagueTableView
+from controllers.league_table import LeagueTable  # Add this import
 
 class Game:
     def __init__(self):
@@ -34,14 +36,22 @@ class Game:
         print("Game initialized")  # Debug print
         
     def start_new_game(self):
+        if self.game_started:  # Add this check to prevent recursion
+            return
+            
         print("Starting new game - generating players...")
         try:
             self.db.clear_all_players()
             self.db.generate_all_teams_squads()
+            # Initialize league tables for all divisions
+            for division_id in range(1, 5):
+                league_table = LeagueTable(self.db)
+                league_table.initialize_league_table(division_id)
             self.game_started = True
-            print("Player generation complete")
+            print("Game initialization complete")
         except Exception as e:
             print(f"Error starting new game: {e}")
+            self.game_started = False  # Reset if there was an error
 
     def run(self):
         running = True
@@ -70,13 +80,25 @@ class Game:
                     elif isinstance(self.current_view, GameMenuView):
                         if result == "TEAM":
                             self.current_view = TeamSubmenuView(self.screen, self.font, self.current_view.team_id)
+                        elif result == "VIEW_TABLE":
+                            team = self.db.get_team_details(self.current_view.team_id)
+                            self.current_view = LeagueTableView(self.screen, self.font, team['division_id'], self.db)
                         elif result == "EXIT_GAME":
                             self.current_view = self.menu
+                        elif result == "SHOW_PLAYER_SELECTION":
+                            self.current_view = PlayerSelectionView(self.screen, self.font, self.current_view.team_id)
+                        elif result == "VIEW_TEAM":
+                            self.current_view = TeamView(self.screen, self.font, self.current_view.team_id)
                         elif result is not None:
                             print(f"Selected menu option: {result}")
                     
+                    elif isinstance(self.current_view, LeagueTableView):
+                        if result == "BACK":
+                            team_id = self.current_view.team_id  # Store team_id before switching view
+                            self.current_view = GameMenuView(self.screen, self.font, team_id)
+
                     elif isinstance(self.current_view, TeamSubmenuView):
-                        if result == "BACK_TO_MAIN_MENU":
+                        if result == "BACK":
                             self.current_view = GameMenuView(self.screen, self.font, self.current_view.team_id)
                         elif result == "SHOW_PLAYER_SELECTION":
                             self.current_view = PlayerSelectionView(self.screen, self.font, self.current_view.team_id)
@@ -101,16 +123,13 @@ class Game:
                             # TODO: Save the selected team
                             self.current_view = TeamView(self.screen, self.font, self.current_view.team_id)
             
-            # Add check for game state - if not started, ensure players are generated
-            if not self.game_started and not isinstance(self.current_view, MenuView):
-                self.start_new_game()
-            
             self.screen.fill((0, 0, 128))  # Navy blue background
             self.current_view.draw()
             pygame.display.flip()
         
         pygame.quit()
         sys.exit()
+            
 
 if __name__ == "__main__": 
     game = Game()

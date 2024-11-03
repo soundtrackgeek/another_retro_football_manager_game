@@ -8,7 +8,7 @@ class TeamSubmenuView:
         self.selected_index = 0
         self.menu_items = [
             "View Team",
-            "Select Players",
+            "Select Players",  # Changed from "Select Team" to match the displayed text
             "Back to Main Menu"
         ]
 
@@ -18,10 +18,13 @@ class TeamSubmenuView:
         elif key == pygame.K_DOWN:
             self.selected_index = (self.selected_index + 1) % len(self.menu_items)
         elif key == pygame.K_RETURN:
-            selected = self.menu_items[self.selected_index].upper().replace(" ", "_")
-            if selected == "SELECT_PLAYERS":
+            selected = self.menu_items[self.selected_index]
+            if selected == "Back to Main Menu":
+                return "BACK"
+            elif selected == "View Team":
+                return "VIEW_TEAM"
+            elif selected == "Select Players":  # Changed to match the menu item text
                 return "SHOW_PLAYER_SELECTION"
-            return selected
         return None
 
     def draw(self):
