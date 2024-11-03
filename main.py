@@ -6,6 +6,7 @@ from views.menu_view import MenuView
 from views.division_select_view import DivisionSelectView
 from views.team_select_view import TeamSelectView
 from views.game_menu_view import GameMenuView
+from views.team_submenu_view import TeamSubmenuView  # Add this import
 from database.database import FootballDB  # Fix this import line
 
 class Game:
@@ -56,11 +57,22 @@ class Game:
                             self.current_view = GameMenuView(self.screen, self.font, result)
                     
                     elif isinstance(self.current_view, GameMenuView):
-                        if result == "EXIT_GAME":
+                        if result == "TEAM":
+                            self.current_view = TeamSubmenuView(self.screen, self.font, self.current_view.team_id)
+                        elif result == "EXIT_GAME":
                             self.current_view = self.menu
                         elif result is not None:
-                            # TODO: Handle other menu options
                             print(f"Selected menu option: {result}")
+                    
+                    elif isinstance(self.current_view, TeamSubmenuView):
+                        if result == "BACK_TO_MAIN_MENU":
+                            self.current_view = GameMenuView(self.screen, self.font, self.current_view.team_id)
+                        elif result == "SELECT_PLAYERS":
+                            # TODO: Create and show player selection view
+                            print("Select players for next match")
+                        elif result == "VIEW_TEAM":
+                            # TODO: Create and show team detail view
+                            print("View team selected")
             
             self.screen.fill((0, 0, 128))  # Navy blue background
             self.current_view.draw()
