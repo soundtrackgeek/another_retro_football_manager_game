@@ -5,6 +5,7 @@ import os
 from views.menu_view import MenuView
 from views.division_select_view import DivisionSelectView
 from views.team_select_view import TeamSelectView
+from views.game_menu_view import GameMenuView  # Add this import
 
 class Game:
     def __init__(self):
@@ -44,9 +45,14 @@ class Game:
                         if result == -1:  # Back button pressed
                             self.current_view = DivisionSelectView(self.screen, self.font)
                         elif result is not None:  # Team was selected
-                            # TODO: Start game with selected team
-                            print(f"Selected team ID: {result}")
-                            self.current_view = self.menu  # Temporarily go back to menu
+                            self.current_view = GameMenuView(self.screen, self.font, result)
+                    
+                    elif isinstance(self.current_view, GameMenuView):
+                        if result == "EXIT_GAME":
+                            self.current_view = self.menu
+                        elif result is not None:
+                            # TODO: Handle other menu options
+                            print(f"Selected menu option: {result}")
             
             self.screen.fill((0, 0, 128))  # Navy blue background
             self.current_view.draw()
