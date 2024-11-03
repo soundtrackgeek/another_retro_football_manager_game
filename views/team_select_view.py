@@ -10,7 +10,7 @@ class TeamSelectView:
         self.selected_index = 0
         self.teams = self.db.get_teams_in_division(division_id)
         self.scroll_offset = 0
-        self.visible_teams = 10  # Number of teams visible at once
+        self.visible_teams = 15  # Number of teams visible at once
         self.spacing = 30
 
     def handle_input(self, key):
