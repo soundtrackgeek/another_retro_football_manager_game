@@ -47,7 +47,7 @@ class TeamSelectView:
         # Draw scroll up indicator if needed
         if self.scroll_offset > 0:
             up_arrow = self.font.render("↑", True, (255, 255, 255))
-            self.screen.blit(up_arrow, (center_x - 10, start_y - 25))
+            self.screen.blit(up_arrow, (center_x - 10, start_y - 60))  # Changed from -25 to -60
 
         # Draw visible teams
         for i, team_index in enumerate(visible_range):
@@ -60,7 +60,7 @@ class TeamSelectView:
         if self.scroll_offset + self.visible_teams < len(self.teams):
             down_arrow = self.font.render("↓", True, (255, 255, 255))
             self.screen.blit(down_arrow, 
-                           (center_x - 10, start_y + (self.visible_teams - 1) * self.spacing + 25))
+                           (center_x - 10, start_y + (self.visible_teams - 1) * self.spacing + 40))  # Changed from +25 to +40
 
         # Draw navigation hint
         hint = self.font.render("ESC - Back", True, (255, 255, 255))
