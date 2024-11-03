@@ -8,13 +8,14 @@ from views.team_select_view import TeamSelectView
 from views.game_menu_view import GameMenuView
 from views.team_submenu_view import TeamSubmenuView  # Add this import
 from views.team_view import TeamView  # Add this import
+from views.player_view import PlayerView
 from database.database import FootballDB  # Fix this import line
 
 class Game:
     def __init__(self):
         pygame.init()
-        self.screen_width = 800
-        self.screen_height = 600
+        self.screen_width = 1024
+        self.screen_height = 768
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Football Manager")
         
@@ -85,6 +86,13 @@ class Game:
                     elif isinstance(self.current_view, TeamView):
                         if result == "BACK":
                             self.current_view = TeamSubmenuView(self.screen, self.font, self.current_view.team_id)
+                        elif isinstance(result, tuple) and result[0] == "SHOW_PLAYER":
+                            self.current_view = PlayerView(self.screen, self.font, result[1])
+                    
+                    elif isinstance(self.current_view, PlayerView):
+                        if result == "BACK":
+                            # Go back to team view
+                            self.current_view = TeamView(self.screen, self.font, self.current_view.player['team_id'])
             
             # Add check for game state - if not started, ensure players are generated
             if not self.game_started and not isinstance(self.current_view, MenuView):
