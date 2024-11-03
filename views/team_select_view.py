@@ -9,35 +9,58 @@ class TeamSelectView:
         self.division_id = division_id
         self.selected_index = 0
         self.teams = self.db.get_teams_in_division(division_id)
+        self.scroll_offset = 0
+        self.visible_teams = 10  # Number of teams visible at once
+        self.spacing = 30
 
     def handle_input(self, key):
         if key == pygame.K_UP:
             self.selected_index = (self.selected_index - 1) % len(self.teams)
+            # Adjust scroll if selection goes above visible area
+            if self.selected_index < self.scroll_offset:
+                self.scroll_offset = self.selected_index
         elif key == pygame.K_DOWN:
             self.selected_index = (self.selected_index + 1) % len(self.teams)
+            # Adjust scroll if selection goes below visible area
+            if self.selected_index >= self.scroll_offset + self.visible_teams:
+                self.scroll_offset = self.selected_index - self.visible_teams + 1
         elif key == pygame.K_RETURN:
             return self.teams[self.selected_index]['id']
         elif key == pygame.K_ESCAPE:
-            return -1  # Signal to go back
+            return -1
         return None
 
     def draw(self):
         center_x = self.screen.get_width() // 2
         center_y = self.screen.get_height() // 2
-        spacing = 30
 
         # Draw title
         title = self.font.render("SELECT TEAM", True, (255, 255, 255))
         title_rect = title.get_rect(center=(center_x, 50))
         self.screen.blit(title, title_rect)
 
-        # Draw teams
+        # Draw teams (only visible portion)
         start_y = 150
-        for i, team in enumerate(self.teams):
-            color = (255, 255, 0) if i == self.selected_index else (255, 255, 255)
-            text = self.font.render(team['name'], True, color)
-            text_rect = text.get_rect(center=(center_x, start_y + i * spacing))
+        visible_range = range(self.scroll_offset, 
+                            min(self.scroll_offset + self.visible_teams, len(self.teams)))
+        
+        # Draw scroll up indicator if needed
+        if self.scroll_offset > 0:
+            up_arrow = self.font.render("↑", True, (255, 255, 255))
+            self.screen.blit(up_arrow, (center_x - 10, start_y - 25))
+
+        # Draw visible teams
+        for i, team_index in enumerate(visible_range):
+            color = (255, 255, 0) if team_index == self.selected_index else (255, 255, 255)
+            text = self.font.render(self.teams[team_index]['name'], True, color)
+            text_rect = text.get_rect(center=(center_x, start_y + i * self.spacing))
             self.screen.blit(text, text_rect)
+
+        # Draw scroll down indicator if needed
+        if self.scroll_offset + self.visible_teams < len(self.teams):
+            down_arrow = self.font.render("↓", True, (255, 255, 255))
+            self.screen.blit(down_arrow, 
+                           (center_x - 10, start_y + (self.visible_teams - 1) * self.spacing + 25))
 
         # Draw navigation hint
         hint = self.font.render("ESC - Back", True, (255, 255, 255))
