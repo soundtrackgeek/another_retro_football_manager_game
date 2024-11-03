@@ -24,18 +24,38 @@ class TeamView:
         self.scroll_offset = 0
         self.visible_players = 8
         self.spacing = 50  # Increased spacing for more stats
+        self.max_selected_visible = 4  # Maximum number of visible selected players
+        self.max_others_visible = 4    # Maximum number of visible other players
+        self.others_scroll_offset = 0  # Separate scroll offset for unselected players
 
     def handle_input(self, key):
+        selected_players = [p for p in self.players if p['is_selected']]
+        other_players = [p for p in self.players if not p['is_selected']]
+
         if key == pygame.K_UP:
             if self.selected_index > 0:
                 self.selected_index -= 1
-                if self.selected_index < self.scroll_offset:
-                    self.scroll_offset = self.selected_index
+                # Adjust scroll offset based on whether we're in selected or other players section
+                if self.selected_index < len(selected_players):
+                    if self.selected_index < self.scroll_offset:
+                        self.scroll_offset = self.selected_index
+                else:
+                    other_index = self.selected_index - len(selected_players)
+                    if other_index < self.others_scroll_offset:
+                        self.others_scroll_offset = other_index
+
         elif key == pygame.K_DOWN:
             if self.selected_index < len(self.players) - 1:
                 self.selected_index += 1
-                if self.selected_index >= self.scroll_offset + self.visible_players:
-                    self.scroll_offset = self.selected_index - self.visible_players + 1
+                # Adjust scroll offset based on whether we're in selected or other players section
+                if self.selected_index < len(selected_players):
+                    if self.selected_index >= self.scroll_offset + self.max_selected_visible:
+                        self.scroll_offset = self.selected_index - self.max_selected_visible + 1
+                else:
+                    other_index = self.selected_index - len(selected_players)
+                    if other_index >= self.others_scroll_offset + self.max_others_visible:
+                        self.others_scroll_offset = other_index - self.max_others_visible + 1
+
         elif key == pygame.K_ESCAPE:
             return "BACK"
         elif key == pygame.K_RETURN:
@@ -72,52 +92,51 @@ class TeamView:
             self.screen.blit(no_players, no_players_rect)
             return
 
-        # Draw scrolling indicators
-        if self.scroll_offset > 0:
-            up_arrow = self.font.render("↑", True, (255, 255, 255))
-            self.screen.blit(up_arrow, (self.screen.get_width() // 2, 60))  # Moved down from 100
+        # Split players into selected and other groups
+        selected_players = [p for p in self.players if p['is_selected']]
+        other_players = [p for p in self.players if not p['is_selected']]
 
-        if self.scroll_offset + self.visible_players < len(self.players):
-            down_arrow = self.font.render("↓", True, (255, 255, 255))
-            self.screen.blit(down_arrow, (self.screen.get_width() // 2, 550))
-
-        # Draw players with wider spacing
-        selected_y = 160  # Moved down from 120
-        others_y = 440
+        # Draw selected players (with scrolling)
+        selected_y = 160
+        visible_selected = selected_players[self.scroll_offset:self.scroll_offset + self.max_selected_visible]
         
-        for player in self.players:
-            # Determine position and color
-            if player['is_selected']:
-                y = selected_y
-                selected_y += self.spacing
-                color = (0, 255, 0)  # Green for selected
-            else:
-                y = others_y
-                others_y += self.spacing
-                color = (255, 255, 255)  # White for non-selected
-                
+        for i, player in enumerate(visible_selected):
+            y = selected_y + (i * self.spacing)
+            color = (0, 255, 0)  # Green for selected
             if self.players.index(player) == self.selected_index:
                 color = (255, 255, 0)  # Yellow for cursor
 
-            try:
-                # Player name (left aligned)
-                name = f"{player['first_name']} {player['last_name']}"
-                text = self.font.render(name, True, color)
-                self.screen.blit(text, (50, y))
+            self.draw_player_row(player, y, color)
 
-                # Position (center aligned at its column)
-                text = self.font.render(player['position'], True, color)
-                pos_rect = text.get_rect(x=600, y=y)
-                self.screen.blit(text, pos_rect)
+        # Draw other players (with separate scrolling)
+        others_y = 440
+        visible_others = other_players[self.others_scroll_offset:self.others_scroll_offset + self.max_others_visible]
+        
+        for i, player in enumerate(visible_others):
+            y = others_y + (i * self.spacing)
+            color = (255, 255, 255)  # White for non-selected
+            if self.players.index(player) == self.selected_index:
+                color = (255, 255, 0)  # Yellow for cursor
 
-                # Rating (center aligned at its column)
-                rating = self.calculate_rating(player)
-                text = self.font.render(str(rating), True, color)
-                rating_rect = text.get_rect(x=800, y=y)
-                self.screen.blit(text, rating_rect)
+            self.draw_player_row(player, y, color)
 
-            except KeyError as e:
-                print(f"Error accessing player data: {e}")
+        # Draw scroll indicators for selected players
+        if self.scroll_offset > 0:
+            up_arrow = self.font.render("↑", True, (255, 255, 255))
+            self.screen.blit(up_arrow, (self.screen.get_width() // 2, 140))
+
+        if self.scroll_offset + self.max_selected_visible < len(selected_players):
+            down_arrow = self.font.render("↓", True, (255, 255, 255))
+            self.screen.blit(down_arrow, (self.screen.get_width() // 2, 350))
+
+        # Draw scroll indicators for other players
+        if self.others_scroll_offset > 0:
+            up_arrow = self.font.render("↑", True, (255, 255, 255))
+            self.screen.blit(up_arrow, (self.screen.get_width() // 2, 420))
+
+        if self.others_scroll_offset + self.max_others_visible < len(other_players):
+            down_arrow = self.font.render("↓", True, (255, 255, 255))
+            self.screen.blit(down_arrow, (self.screen.get_width() // 2, 630))
 
         # Draw navigation hints
         hints = ["ESC - Back", "RETURN - View Details"]
@@ -128,6 +147,23 @@ class TeamView:
             text_rect.x = 20
             self.screen.blit(text, text_rect)
             y -= 30
+
+    def draw_player_row(self, player, y, color):
+        # Player name (left aligned)
+        name = f"{player['first_name']} {player['last_name']}"
+        text = self.font.render(name, True, color)
+        self.screen.blit(text, (50, y))
+
+        # Position (center aligned at its column)
+        text = self.font.render(player['position'], True, color)
+        pos_rect = text.get_rect(x=600, y=y)
+        self.screen.blit(text, pos_rect)
+
+        # Rating (center aligned at its column)
+        rating = self.calculate_rating(player)
+        text = self.font.render(str(rating), True, color)
+        rating_rect = text.get_rect(x=800, y=y)
+        self.screen.blit(text, rating_rect)
 
     def calculate_rating(self, player):
         if player['position'] == 'GK':
