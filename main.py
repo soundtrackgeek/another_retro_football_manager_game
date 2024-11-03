@@ -10,6 +10,7 @@ from views.team_submenu_view import TeamSubmenuView  # Add this import
 from views.team_view import TeamView  # Add this import
 from views.player_view import PlayerView
 from database.database import FootballDB  # Fix this import line
+from views.player_selection_view import PlayerSelectionView
 
 class Game:
     def __init__(self):
@@ -77,9 +78,8 @@ class Game:
                     elif isinstance(self.current_view, TeamSubmenuView):
                         if result == "BACK_TO_MAIN_MENU":
                             self.current_view = GameMenuView(self.screen, self.font, self.current_view.team_id)
-                        elif result == "SELECT_PLAYERS":
-                            # TODO: Create and show player selection view
-                            print("Select players for next match")
+                        elif result == "SHOW_PLAYER_SELECTION":
+                            self.current_view = PlayerSelectionView(self.screen, self.font, self.current_view.team_id)
                         elif result == "VIEW_TEAM":
                             self.current_view = TeamView(self.screen, self.font, self.current_view.team_id)
                     
@@ -93,6 +93,13 @@ class Game:
                         if result == "BACK":
                             # Go back to team view
                             self.current_view = TeamView(self.screen, self.font, self.current_view.player['team_id'])
+                    
+                    elif isinstance(self.current_view, PlayerSelectionView):
+                        if result == "BACK":
+                            self.current_view = TeamSubmenuView(self.screen, self.font, self.current_view.team_id)
+                        elif result == "SELECTION_COMPLETE":
+                            # TODO: Save the selected team
+                            self.current_view = TeamView(self.screen, self.font, self.current_view.team_id)
             
             # Add check for game state - if not started, ensure players are generated
             if not self.game_started and not isinstance(self.current_view, MenuView):

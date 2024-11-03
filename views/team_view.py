@@ -49,6 +49,13 @@ class TeamView:
         title_rect = title.get_rect(center=(self.screen.get_width() // 2, 30))
         self.screen.blit(title, title_rect)
 
+        # Draw section headers
+        selected_text = self.font.render("SELECTED SQUAD (First 11)", True, (255, 255, 0))
+        self.screen.blit(selected_text, (50, 80))
+        
+        others_text = self.font.render("OTHER SQUAD PLAYERS", True, (255, 255, 0))
+        self.screen.blit(others_text, (50, 400))
+
         # Draw column headers with wider spacing
         headers = ["Name", "Pos", "Rating"]
         header_positions = [50, 600, 800]  # Adjusted x positions for headers
@@ -75,15 +82,22 @@ class TeamView:
             self.screen.blit(down_arrow, (self.screen.get_width() // 2, 550))
 
         # Draw players with wider spacing
-        start_y = 160  # Moved down from 120
-        end_index = min(self.scroll_offset + self.visible_players, len(self.players))
+        selected_y = 160  # Moved down from 120
+        others_y = 440
         
-        for i in range(self.scroll_offset, end_index):
-            player = self.players[i]
-            y = start_y + ((i - self.scroll_offset) * self.spacing)
-            
-            # Highlight selected player
-            color = (255, 255, 0) if i == self.selected_index else (255, 255, 255)
+        for player in self.players:
+            # Determine position and color
+            if player['is_selected']:
+                y = selected_y
+                selected_y += self.spacing
+                color = (0, 255, 0)  # Green for selected
+            else:
+                y = others_y
+                others_y += self.spacing
+                color = (255, 255, 255)  # White for non-selected
+                
+            if self.players.index(player) == self.selected_index:
+                color = (255, 255, 0)  # Yellow for cursor
 
             try:
                 # Player name (left aligned)

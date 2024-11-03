@@ -44,21 +44,23 @@ class FootballDB:
         with self.connect() as conn:
             cursor = conn.cursor()
             
-            # First drop the players table if it exists
+            # First drop all existing tables
             cursor.execute('DROP TABLE IF EXISTS players')
+            cursor.execute('DROP TABLE IF EXISTS league_tables')
+            cursor.execute('DROP TABLE IF EXISTS teams')
+            cursor.execute('DROP TABLE IF EXISTS divisions')
             
-            # Create divisions table
+            # Now create tables in correct order
             cursor.execute('''
-                CREATE TABLE IF NOT EXISTS divisions (
+                CREATE TABLE divisions (
                     id INTEGER PRIMARY KEY,
                     name TEXT NOT NULL,
                     level INTEGER NOT NULL
                 )
             ''')
 
-            # Create teams table
             cursor.execute('''
-                CREATE TABLE IF NOT EXISTS teams (
+                CREATE TABLE teams (
                     id INTEGER PRIMARY KEY,
                     name TEXT NOT NULL,
                     division_id INTEGER,
@@ -68,7 +70,6 @@ class FootballDB:
                 )
             ''')
 
-            # Create players table with morale column
             cursor.execute('''
                 CREATE TABLE players (
                     id INTEGER PRIMARY KEY,
@@ -86,6 +87,7 @@ class FootballDB:
                     value INTEGER,
                     wages INTEGER,
                     contract_years INTEGER,
+                    is_selected INTEGER DEFAULT 0,
                     FOREIGN KEY (team_id) REFERENCES teams(id)
                 )
             ''')
@@ -263,18 +265,24 @@ class FootballDB:
                     INSERT INTO players (
                         first_name, last_name, team_id, age, position,
                         attacking, defending, goalkeeping, stamina, speed,
-                        morale, value, wages, contract_years
+                        morale, value, wages, contract_years, is_selected
                     ) VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                     )
                 """, (
                     player['first_name'], player['last_name'], player['team_id'],
                     player['age'], player['position'], player['attacking'],
                     player['defending'], player['goalkeeping'], player['stamina'],
                     player['speed'], player['morale'], player['value'],
-                    player['wages'], player['contract_years']
+                    player['wages'], player['contract_years'], 0  # Initialize is_selected as 0
                 ))
             conn.commit()
+            
+            # Debug: Verify players were inserted
+            cursor.execute("SELECT COUNT(*) FROM players WHERE team_id = ?", (team_id,))
+            count = cursor.fetchone()[0]
+            print(f"Added {count} players for team {team_id}")
+            
         except Exception as e:
             print(f"Error generating squad for team {team_id}: {e}")
             if conn:
@@ -333,12 +341,6 @@ class FootballDB:
             conn = self.connect()
             cursor = conn.cursor()
             
-            # Add debug prints
-            print(f"Querying players for team_id: {team_id}")
-            cursor.execute("SELECT COUNT(*) FROM players")
-            total_players = cursor.fetchone()[0]
-            print(f"Total players in database: {total_players}")
-            
             cursor.execute("""
                 SELECT * FROM players 
                 WHERE team_id = ?
@@ -346,16 +348,36 @@ class FootballDB:
             """, (team_id,))
             
             players = [dict(row) for row in cursor.fetchall()]
-            print(f"Found {len(players)} players for team {team_id}")
-            
-            if len(players) > 0:
-                print(f"Sample player data: {players[0]}")
             return players
             
         except sqlite3.Error as e:
             logging.error(f"Error getting team players: {e}")
-            print(f"Error getting team players: {e}")
+            print(f"Database error: {e}")
             return []
+
+    def save_team_selection(self, team_id: int, selected_player_ids: list):
+        try:
+            with self.connect() as conn:
+                cursor = conn.cursor()
+                # First reset all players for this team
+                cursor.execute("""
+                    UPDATE players 
+                    SET is_selected = 0 
+                    WHERE team_id = ?
+                """, (team_id,))
+                
+                # Then set the selected players
+                for player_id in selected_player_ids:
+                    cursor.execute("""
+                        UPDATE players 
+                        SET is_selected = 1 
+                        WHERE id = ? AND team_id = ?
+                    """, (player_id, team_id))
+                conn.commit()
+                print(f"Saved selection for team {team_id}: {selected_player_ids}")
+        except sqlite3.Error as e:
+            print(f"Error saving team selection: {e}")
+            logging.error(f"Error saving team selection: {e}")
 
     def update_league_table(self, team_id: int, division_id: int, 
                           played: int, won: int, drawn: int, lost: int,

@@ -18,7 +18,10 @@ class TeamSubmenuView:
         elif key == pygame.K_DOWN:
             self.selected_index = (self.selected_index + 1) % len(self.menu_items)
         elif key == pygame.K_RETURN:
-            return self.menu_items[self.selected_index].upper().replace(" ", "_")
+            selected = self.menu_items[self.selected_index].upper().replace(" ", "_")
+            if selected == "SELECT_PLAYERS":
+                return "SHOW_PLAYER_SELECTION"
+            return selected
         return None
 
     def draw(self):
