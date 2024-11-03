@@ -10,12 +10,21 @@ class PlayerCreator:
         first_names = []
         last_names = []
         file_path = os.path.join('database', 'playernames.csv')
-        with open(file_path, 'r') as file:
-            reader = csv.reader(file)
-            for row in reader:
-                if len(row) == 2:
-                    first_names.append(row[0])
-                    last_names.append(row[1])
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if len(row) == 2:
+                        first_names.append(row[0].strip())
+                        last_names.append(row[1].strip())
+        except UnicodeDecodeError:
+            # Fallback to latin-1 if UTF-8 fails
+            with open(file_path, 'r', encoding='latin-1') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if len(row) == 2:
+                        first_names.append(row[0].strip())
+                        last_names.append(row[1].strip())
         return first_names, last_names
 
     def generate_player(self, team_id, position):
