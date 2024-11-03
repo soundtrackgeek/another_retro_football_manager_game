@@ -5,7 +5,8 @@ import os
 from views.menu_view import MenuView
 from views.division_select_view import DivisionSelectView
 from views.team_select_view import TeamSelectView
-from views.game_menu_view import GameMenuView  # Add this import
+from views.game_menu_view import GameMenuView
+from database.database import FootballDB  # Fix this import line
 
 class Game:
     def __init__(self):
@@ -24,6 +25,12 @@ class Game:
         self.menu = MenuView(self.screen, self.font)
         self.current_view = self.menu
         
+        self.db = FootballDB()
+        
+    def start_new_game(self):
+        self.db.clear_all_players()
+        self.db.generate_all_teams_squads()
+
     def run(self):
         running = True
         while running:
@@ -35,6 +42,7 @@ class Game:
                     
                     if isinstance(self.current_view, MenuView):
                         if result == "START_GAME":
+                            self.start_new_game()  # Generate players for new game
                             self.current_view = DivisionSelectView(self.screen, self.font)
                     
                     elif isinstance(self.current_view, DivisionSelectView):
