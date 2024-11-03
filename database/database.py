@@ -5,6 +5,7 @@ import logging
 from typing import List, Dict, Any
 import random
 import csv
+from controllers.player_creation import PlayerCreator  # Add this import
 
 class FootballDB:
     def __init__(self):
@@ -235,75 +236,17 @@ class FootballDB:
                     VALUES (?, ?, ?, ?)
                 """, team)
 
-    def load_player_names(self):
-        first_names = []
-        last_names = []
-        with open('database/playernames.csv', 'r') as file:
-            reader = csv.reader(file)
-            for row in reader:
-                if len(row) == 2:
-                    first_names.append(row[0])
-                    last_names.append(row[1])
-        return first_names, last_names
-
-    def generate_random_player(self, team_id, first_names, last_names):
-        positions = ['GK', 'DEF', 'DEF', 'DEF', 'DEF', 'MID', 'MID', 'MID', 'MID', 'ATT', 'ATT', 'ATT']
-        position = random.choice(positions)
-        
-        # Base stats
-        base_attacking = random.randint(40, 85)
-        base_defending = random.randint(40, 85)
-        base_goalkeeping = random.randint(40, 85)
-        
-        # Adjust stats based on position
-        if position == 'GK':
-            goalkeeping = base_goalkeeping + 10
-            defending = base_defending - 20
-            attacking = base_attacking - 30
-        elif position == 'DEF':
-            goalkeeping = base_goalkeeping - 30
-            defending = base_defending + 10
-            attacking = base_attacking - 10
-        elif position == 'MID':
-            goalkeeping = base_goalkeeping - 30
-            defending = base_defending
-            attacking = base_attacking
-        else:  # ATT
-            goalkeeping = base_goalkeeping - 30
-            defending = base_defending - 20
-            attacking = base_attacking + 10
-
-        # Ensure stats stay within bounds
-        goalkeeping = max(1, min(99, goalkeeping))
-        defending = max(1, min(99, defending))
-        attacking = max(1, min(99, attacking))
-
-        return {
-            'first_name': random.choice(first_names),
-            'last_name': random.choice(last_names),
-            'team_id': team_id,
-            'age': random.randint(16, 35),
-            'position': position,
-            'attacking': attacking,
-            'defending': defending,
-            'goalkeeping': goalkeeping,
-            'stamina': random.randint(50, 100),
-            'speed': random.randint(50, 100),
-            'morale': random.randint(60, 100),
-            'value': random.randint(100000, 15000000),
-            'wages': random.randint(1000, 100000),
-            'contract_years': random.randint(1, 5)
-        }
-
     def generate_squad_for_team(self, team_id):
         try:
-            first_names, last_names = self.load_player_names()
+            creator = PlayerCreator()
             conn = self.connect()
             cursor = conn.cursor()
             
-            # Generate 20 players
-            for _ in range(20):
-                player = self.generate_random_player(team_id, first_names, last_names)
+            # Generate squad using the PlayerCreator
+            squad = creator.generate_squad(team_id)
+            
+            # Insert all players into database
+            for player in squad:
                 cursor.execute("""
                     INSERT INTO players (
                         first_name, last_name, team_id, age, position,
